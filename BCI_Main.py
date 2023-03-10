@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 # version 1.1
-"""Preproccessing and machine learning tools for the Kara One database
+"""Preprocessing and machine learning tools for the Kara One database
 (openly available EEG data from an imagined speech research). 
 """
 
-import glob, os
+import glob
 import mne
 import scipy.io as sio
 import numpy as np
 import os
-import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.metrics import accuracy_score
@@ -37,7 +36,7 @@ class Dataset:
     ---------
     registry : list
         list of class instances.
-    subject : string
+        subject : string
         subject name, in this case 'MM05', 'MM21' etc.
         Used for file navigation.
     figures_path : str
@@ -89,7 +88,6 @@ class Dataset:
         self.name = subject
         self.registry.append(self)
         # TODO is self in self.registry neccesary 
-        
 
     def load_data(self, path_to_data, raw=True):
         """Load subject data from the Kara One dataset.
@@ -121,22 +119,20 @@ class Dataset:
             print("Loading raw data.")
             for f in glob.glob("*.cnt"):
                 print(f)
-                self.eeg_data = mne.io.read_raw_cnt(f,preload= True)
+                self.eeg_data = mne.io.read_raw_cnt(f, preload=True)
                 print(self.eeg_data.info)
                 print(self.eeg_data)
-                #self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger', 'STI 014'])
+                # self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger', 'STI 014'])
                 self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger'])
         else:
             print("Loading filtered data.")
             for f in glob.glob("*-filtered.fif"):
                 self.eeg_data = mne.io.read_raw_fif(f, 'standard_1020', preload=True)
-        for f in glob.glob("all_features_simple.mat"):
+        for f in glob.glob("all_features_noICA.mat"):
             prompts_to_extract = sio.loadmat(f)
-        self.prompts = prompts_to_extract['all_features'][0,0]
+        self.prompts = prompts_to_extract['all_features'][0, 0]
         for f in glob.glob("epoch_inds.mat"):
             self.epoch_inds = sio.loadmat(f, variable_names=('clearing_inds', 'thinking_inds'))
-
-
 
     def select_channels(self, channels=5):
         """Choose how many or which channels to use.
@@ -174,7 +170,7 @@ class Dataset:
             self.eeg_data = self.eeg_data.pick_channels(picks)
         elif type(channels) is list:
             self.eeg_data = self.eeg_data.pick_channels(channels)
-        else: 
+        else:
             raise AttributeError("Incorrect \"channels\" attribute type, should be an int, a list or left empty.")
             # TODO: check if works
         print(self.eeg_data.info['ch_names'])
@@ -208,11 +204,11 @@ class Dataset:
             fig.savefig(os.path.join(self.figures_path, self.name + "_raw_signal.png"))
         if hp_freq:
             for idx, eeg_vector in enumerate(self.eeg_data[:][0]):
-                [b, a] = sig.butter(4, hp_freq/self.eeg_data.info['sfreq']/2, btype='highpass')
+                [b, a] = sig.butter(4, hp_freq / self.eeg_data.info['sfreq'] / 2, btype='highpass')
                 self.eeg_data[idx] = sig.filtfilt(b, a, eeg_vector)
         if lp_freq:
             for idx, eeg_vector in enumerate(self.eeg_data[:][0]):
-                [b, a] = sig.butter(4, lp_freq/self.eeg_data.info['sfreq']/2, btype='lowpass')
+                [b, a] = sig.butter(4, lp_freq / self.eeg_data.info['sfreq'] / 2, btype='lowpass')
                 self.eeg_data[idx] = sig.filtfilt(b, a, eeg_vector)
         print("Filtering done.")
         if plot:
@@ -221,7 +217,6 @@ class Dataset:
         if save_filtered_data:
             self.eeg_data.save(self.name + "-filtered.fif", overwrite=True)
             print("Filtered data saved as " + self.name + "-filtered.fif")
-
 
     def ica(self, ica_type='fast'):
         """Exclude components using Independent Component Analysis.
@@ -252,7 +247,7 @@ class Dataset:
         elif ica_type == 'extensive':
             print("Computing extensive ICA.")
             ica = mne.preprocessing.ICA(method='extended-infomax', random_state=1)
-        else: 
+        else:
             raise AttributeError("Incorrect \"ica_type\" attribute value.")
             # TODO: check if works
         ica.fit(self.eeg_data)
@@ -262,7 +257,6 @@ class Dataset:
         ica.apply(self.eeg_data)
         if ica_type != "saved":
             ica.save(self.name + "-ica.fif")
-
 
     def prepare_data(self, prompts_list=None, scale_data=True):
         """Prepare labels and calculate features.
@@ -285,24 +279,24 @@ class Dataset:
         Y : ndarray
             1D array of labels with 'str' type.
         """
-       
+
         def _calculate_features(condition_inds, prompts_list):
             print("Calculating features.")
-            offset = int(self.eeg_data.info["sfreq"]/2)
+            offset = int(self.eeg_data.info["sfreq"] / 2)
             X = []
             for i, prompt in enumerate(self.prompts["prompts"][0]):
                 if prompt[0] in prompts_list:
                     start = self.epoch_inds[condition_inds][0][i][0][0] + offset
                     end = self.epoch_inds[condition_inds][0][i][0][1]
                     channel_set = []
-                    for idx, ch in  enumerate(self.eeg_data.ch_names):  
+                    for idx, ch in enumerate(self.eeg_data.ch_names):
                         epoch = self.eeg_data[idx][0][0][start:end]
                         channel_set.extend(fast_feat_array(epoch, ch))
                     X.append(channel_set)
             return X
 
         t0 = time()
-        Y =[]
+        Y = []
         if type(prompts_list) is dict:
             print('Making custom categories.')
             for prompt in self.prompts["prompts"][0]:
@@ -314,18 +308,17 @@ class Dataset:
             Y = self.prompts["prompts"][0]
             X = _calculate_features("clearing_inds", Y)
             X.extend(_calculate_features("thinking_inds", Y))
-            Y = np.hstack([np.repeat('rest', len(X)/2), np.repeat('active', len(X)/2)])
-        
+            Y = np.hstack([np.repeat('rest', len(X) / 2), np.repeat('active', len(X) / 2)])
+
         print("Features calculated.\nDone in %0.3fs" % (time() - t0))
         self.X = np.asarray(X)
-        self.Y = np.hstack(Y) 
+        self.Y = np.hstack(Y)
 
         if scale_data:
             print("Scaling data.")
             self.X['feature_value'] = StandardScaler().fit_transform(self.X['feature_value'])
 
         return self.X['feature_value'], self.Y
-
 
     def find_best_features(self, feature_limit=30):
         """Select n best features.
@@ -346,33 +339,34 @@ class Dataset:
             2d array of signal features with 'float' type.
         Y : ndarray
             1D array of labels with 'str' type.
-        """ 
+        """
         X = self.X
         Y = self.Y
 
         print("Calculating ANOVA.")
         selector = SelectKBest(score_func=f_classif, k=feature_limit)
-        
+
         selector.fit(X['feature_value'], Y)
         print(selector.get_support([True]))
 
         chosen = []
         for idx in selector.get_support([True]):
-            chosen.append([selector.scores_[idx], selector.pvalues_[idx], X[0,idx]['channel'], X[0,idx]['feature_name']])
-        
+            chosen.append(
+                [selector.scores_[idx], selector.pvalues_[idx], X[0, idx]['channel'], X[0, idx]['feature_name']])
+
         chosen.sort(key=lambda s: s[1])
         for chsn in chosen:
             print("F= %0.3f\tp = %0.3f\t channel = %s\t fname = %s" % (chsn[0], chsn[1], chsn[2], chsn[3]))
 
         trans_chosen = np.transpose(chosen)
         for chosen, text in (
-            (trans_chosen[2], 'Scored by channels: '), 
-            (trans_chosen[3], 'Scored by features: ')):
+                (trans_chosen[2], 'Scored by channels: '),
+                (trans_chosen[3], 'Scored by features: ')):
             unique, counts = np.unique(chosen, return_counts=True)
             sorted_counts = sorted(dict(zip(unique, counts)).items(), reverse=True, key=lambda s: s[1])
-            print(text ,sorted_counts)
-        
-        print("ANOVA calculated, ", len(X[0])-feature_limit, "features removed,", feature_limit, " features left.")
+            print(text, sorted_counts)
+
+        print("ANOVA calculated, ", len(X[0]) - feature_limit, "features removed,", feature_limit, " features left.")
         X = selector.transform(X)
 
         return X['feature_value'], Y
@@ -385,18 +379,18 @@ class Classifier:
     Notes
     -----
     The class provides methods for parameters optimisation
-    and data classification. Former one utilise exaustive search,
-    the latter inputed classifiers in repeated stratified kfold model.
+    and data classification. Former one utilise exhaustive search,
+    the latter inputted classifiers in repeated stratified kfold model.
 
     Algorithm's parameters are not relevant if grid_search_sklearn() is
-    to be used, adequate parameters's ranges should be inputed instead.
+    to be used, adequate parameters' ranges should be inputted instead.
 
     Attributes
     ---------
     registry : list
         list of class instances.
     name : str
-        name of classifier for logging puproses.
+        name of classifier for logging purposes.
     algorithm : object
         classifier object.
 
@@ -413,19 +407,18 @@ class Classifier:
         self.registry.append(self)
         self.name = name
         self.algorithm = algorithm
-    
 
     def grid_search_sklearn(self, X, Y, parameters):
-        """Optimise classifier parameters using exaustive search.
+        """Optimise classifier parameters using exhaustive search.
 
         Parameters
-        ----------
+        ---------
         X, Y : array_like
             data for classifier in Sklearn-compatible format. 
         parameters : dict
-            Dictionery of parameters for Sklearn.GridSearchCV.
+            Dictionary of parameters for Sklearn.GridSearchCV.
         """
-        print('-'*80)
+        print('-' * 80)
         print("Performing grid search for ", self.name, " algorithm...")
         grid_search = GridSearchCV(self.algorithm, parameters, n_jobs=-2, error_score=0, verbose=0)
         t0 = time()
@@ -436,7 +429,6 @@ class Classifier:
         best_parameters = grid_search.best_estimator_.get_params()
         self.algorithm.set_params(**best_parameters)
         print("Best parameters for ", self.name, ":\n", best_parameters)
-
 
     def classify(self, X, Y, crval_splits=6, crval_repeats=10):
         """Classify data.
@@ -471,17 +463,15 @@ class Classifier:
             Accuracy.append(accuracy_score(Y[test], predicted) * 100)
             F1.append(f1_score(Y[test], predicted, average='macro') * 100)
             CFM.append(confusion_matrix(Y[test], predicted))
-        print('-'*40+'\n%s\n'  % self.name + '-'*40)
+        print('-' * 40 + '\n%s\n' % self.name + '-' * 40)
         print("Parameters: ", self.algorithm.get_params())
         print("Accuracy: %.2f%% (+/- %.2f%%)" % (np.mean(Accuracy), np.std(Accuracy)))
         print("F1 score: %.2f%% (+/- %.2f%%)" % (np.mean(F1), np.std(F1)))
-        print("\nConfusion Matrix:\n", np.sum(CFM, axis = 0),'\nNumber of instances: ', np.sum(CFM))
+        print("\nConfusion Matrix:\n", np.sum(CFM, axis=0), '\nNumber of instances: ', np.sum(CFM))
         print("done in %0.3fs" % (time() - t0))
 
         return Accuracy, F1
 
 
-
 if __name__ == '__main__':
-
     pass

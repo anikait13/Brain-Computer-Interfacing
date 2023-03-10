@@ -20,7 +20,7 @@ def tar(sequence):
     tar = par(sequence) + nar(sequence)
     return tar
 
-# total absolute area 
+# total absolute area
 def taar(sequence):
     taar = par(sequence) + np.abs(nar(sequence))
     return taar
@@ -72,7 +72,7 @@ def zc(sequence):
 
 # peak-to-peak slope
 def pps(sequence):
-    pps = pp(sequence)/ppt(sequence) 
+    pps = pp(sequence)/ppt(sequence)
     return pps[0][0]
 
 # zero crossings density
@@ -80,7 +80,7 @@ def zcd(sequence):
     zcd = zc(sequence)/ppt(sequence)
     return zcd[0][0]
 
-# standard deviation 
+# standard deviation
 def std(sequence):
     return np.std(sequence)
 # variance
@@ -109,7 +109,7 @@ def mode_value2(sequence):
 def mode_value3(sequence):
     mode = stats.mode(np.round(sequence, decimals=3), axis=None)
     return mode[0][0]
-    
+
 # frequency-domain features
 class freq_dom_feat:
 
@@ -143,7 +143,7 @@ class freq_dom_feat:
         else:
             freq_right = self.freqs[index[self.t//4]]
             return (freq_right+freq_left)/2
-    
+
 
 # Gathering function. 'Pretty' solution, using the functions above.
 def pretty_feat_array(sequence, channel):
@@ -228,6 +228,7 @@ def fast_feat_array(sequence, channel):
         a channel name (4 unicode chars), a feature's name (4 unicode 
         chars) and a feature's value (float).
     """
+    global amp
     positive = [n for n in sequence if n >= 0]
     par = np.sum(positive)
     negative = [n for n in sequence if n <= 0]
@@ -237,9 +238,9 @@ def fast_feat_array(sequence, channel):
 
     mins = np.abs(np.min(sequence))
     maxs = np.max(sequence)
-    if ( mins <= maxs ):
+    if mins <= maxs:
         amp = maxs
-    elif ( maxs <= mins ):
+    elif maxs <= mins:
         amp = np.min(sequence)
 
     latency = np.where(sequence == amp)[0]
