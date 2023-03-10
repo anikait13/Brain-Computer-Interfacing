@@ -19,7 +19,7 @@ from sklearn.preprocessing import StandardScaler
 from scipy import stats
 from scipy import signal as sig
 from time import time
-from features import fast_feat_array
+from features import fast_feat_array , pretty_feat_array
 
 
 class Dataset:
@@ -128,7 +128,7 @@ class Dataset:
             print("Loading filtered data.")
             for f in glob.glob("*-filtered.fif"):
                 self.eeg_data = mne.io.read_raw_fif(f, 'standard_1020', preload=True)
-        for f in glob.glob("all_features_noICA.mat"):
+        for f in glob.glob("all_features_ICA.mat"):
             prompts_to_extract = sio.loadmat(f)
         self.prompts = prompts_to_extract['all_features'][0, 0]
         for f in glob.glob("epoch_inds.mat"):
@@ -218,7 +218,7 @@ class Dataset:
             self.eeg_data.save(self.name + "-filtered.fif", overwrite=True)
             print("Filtered data saved as " + self.name + "-filtered.fif")
 
-    def ica(self, ica_type='fast'):
+    def ica(self, ica_type='extensive'):
         """Exclude components using Independent Component Analysis.
 
         Notes
@@ -372,6 +372,7 @@ class Dataset:
         return X['feature_value'], Y
 
 
+
 # TODO NN compatibility 
 class Classifier:
     """Prepare ML models and classify data.
@@ -462,6 +463,9 @@ class Classifier:
             predicted = self.algorithm.predict(X[test])
             Accuracy.append(accuracy_score(Y[test], predicted) * 100)
             F1.append(f1_score(Y[test], predicted, average='macro') * 100)
+            print("we guessed", predicted)
+            print("the answer was ", Y[test])
+            print(confusion_matrix(Y[test], predicted))
             CFM.append(confusion_matrix(Y[test], predicted))
         print('-' * 40 + '\n%s\n' % self.name + '-' * 40)
         print("Parameters: ", self.algorithm.get_params())
@@ -470,7 +474,7 @@ class Classifier:
         print("\nConfusion Matrix:\n", np.sum(CFM, axis=0), '\nNumber of instances: ', np.sum(CFM))
         print("done in %0.3fs" % (time() - t0))
 
-        return Accuracy, F1
+        return Accuracy, F1, np, np.mean(Accuracy)
 
 
 if __name__ == '__main__':

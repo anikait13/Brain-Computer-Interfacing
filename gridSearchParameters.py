@@ -77,3 +77,31 @@ def para_lda():
         'n_components': [5, 10, 15, 20, 25, 30],
         'tol': [1e-2, 1e-3, 1e-4]}]
     return para_lda
+
+def para_rfc():
+    """GridSearchCV parameters for Random forest classifiers."""
+    para_rfc = [{
+        'n_estimators': [100, 200, 500, 50],
+        #max_depth:
+        #min_samples_split:
+        #min_samples_leaf:
+        }]
+
+    return para_rfc
+
+def para_mlpc():
+    """GridSearchCV parameters for Multi Layer Perceptron."""
+    para_mlpc = [{
+        "hidden_layer_sizes": [200, 500],
+        # 'activation': ['relu', 'tanh', 'sgd'],
+        'activation': ['identity','relu'],
+        'solver': ['sgd'],
+        'learning_rate': ['adaptive'],
+        'warm_start': [True],
+        'early_stopping': [True]
+        #max_depth:
+        #min_samples_split:
+        #min_samples_leaf:
+        }]
+
+    return para_mlpc
