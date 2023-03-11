@@ -310,6 +310,8 @@ class Dataset:
             X.extend(_calculate_features("thinking_inds", Y))
             Y = np.hstack([np.repeat('rest', len(X) / 2), np.repeat('active', len(X) / 2)])
 
+
+
         print("Features calculated.\nDone in %0.3fs" % (time() - t0))
         self.X = np.asarray(X)
         self.Y = np.hstack(Y)

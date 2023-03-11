@@ -5,44 +5,25 @@ def para_svc():
     """GridSearchCV parameteres for SVC."""
 
     para_svc = [{
-        'C': [10000, 1000, 100, 10, 1, 0.1, 0.01, 1e-3, 1e-4, 1e-5],
+        'C': [10000, 1000, 100, 10, 1],
         'cache_size': [1000],
         # 'class_weight': [],
         # 'coef0': [],
-        # 'decision_function_shape': ['ovo'],
+        'decision_function_shape': ['ovo'],
         # 'degree': [],
         'gamma': ['auto'],
-        'kernel': ['linear', 'rbf'],
-        'max_iter': [100, 1000, 5000, 10000, 100000, -1],
+        # 'kernel': ['linear','rbf']
+        'kernel': ['rbf'],
+        'max_iter': [1000, 5000, 10000, 100000, -1],
         # 'probability': [True],
         # 'random_state': [1000],
         'shrinking': [True, False],
-        'tol': [1e-2, 1e-3, 1e-4]},
-        {   
-            # svc variant with sigmoidal kernel
-        'C': [10000, 1000, 100, 10, 1, 0.1, 0.01, 1e-3, 1e-4, 1e-5],
-        'cache_size': [1000],
-        'coef0': [0, 1],
-        'gamma': ['auto'],
-        'kernel': ['sigmoid'],
-        'max_iter': [100, 1000, 5000, 10000, 100000, -1],
-        'shrinking': [True, False],
-        'tol': [1e-2, 1e-3, 1e-4]},
-        {
-            # svc variant with polynomial kernel
-        'C': [10000, 1000, 100, 10, 1, 0.1, 0.01, 1e-3, 1e-4, 1e-5],
-        'cache_size': [1000],
-        'coef0': [0, 1],
-        'degree': [1,2,3,4,5],
-        'gamma': ['auto'],
-        'kernel': ['poly'],
-        'max_iter': [100, 1000, 5000, 10000, 100000, -1],
-        'shrinking': [True, False],
-        'tol': [1e-2, 1e-3, 1e-4]}]
+        'tol': [1e-2, 1e-3, 1e-4]}
+    ]
     return para_svc
 
 def para_knn():
-    """GridSearchCV parameteres for kNN."""
+    """GridSearchCV parameters for kNN."""
 
     para_knn = [{
         'n_neighbors': [3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 20, 21, 25, 30, 31],
@@ -82,6 +63,8 @@ def para_rfc():
     """GridSearchCV parameters for Random forest classifiers."""
     para_rfc = [{
         'n_estimators': [100, 200, 500, 50],
+        'criterion': ['gini', 'entropy','log_loss'],
+        'max_features': ['sqrt','log2'],
         #max_depth:
         #min_samples_split:
         #min_samples_leaf:
@@ -92,12 +75,12 @@ def para_rfc():
 def para_mlpc():
     """GridSearchCV parameters for Multi Layer Perceptron."""
     para_mlpc = [{
-        "hidden_layer_sizes": [200, 500],
+        "hidden_layer_sizes": [6],
         # 'activation': ['relu', 'tanh', 'sgd'],
-        'activation': ['identity','relu'],
-        'solver': ['sgd'],
+        'activation': ['logistic','relu','identity'],
+        'solver': ['lbfgs'],
         'learning_rate': ['adaptive'],
-        'warm_start': [True],
+        'warm_start': [False],
         'early_stopping': [True]
         #max_depth:
         #min_samples_split:
@@ -105,3 +88,18 @@ def para_mlpc():
         }]
 
     return para_mlpc
+
+def para_dbn():
+    """GridSearchCV parameters for Deep Belief Network."""
+    para_dbn = [{
+        'hidden_layers_structure': [256, 256],
+        'learning_rate_rbm': 0.05,
+        'learning_rate': 0.1,
+        'n_epochs_rbm': 10,
+        'n_iter_backprop': 100,
+        'batch_size': 32,
+        'activation_function': ['relu'],
+        'dropout_p': 0.2
+        }]
+
+    return para_dbn
