@@ -18,7 +18,7 @@ Classifier("Support Vector Machine", SVC())
 # Classifier("k-nearest neighbors", KNeighborsClassifier())
 # Classifier("Linear Discriminant Analysis", LDA())
 # Classifier("Neural Network", MLPClassifier())
-Classifier("ADA Boost", AdaBoostClassifier())
+# Classifier("ADA Boost", AdaBoostClassifier())
 
 
 
@@ -45,7 +45,7 @@ for subject in Dataset.registry:
     subject.select_channels(channels=60)
     subject.filter_data(lp_freq=None, hp_freq=1, save_filtered_data=False, plot=True)
     subject.prepare_data(mode_list[1], scale_data=True)
-    X, Y = subject.find_best_features(feature_limit=100)
+    X, Y = subject.find_best_features(feature_limit=20)
 
     for idx, cl in enumerate(Classifier.registry):
         cl.grid_search_sklearn(X, Y, parameters_list[idx])
