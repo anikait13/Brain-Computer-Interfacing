@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Parameters for SVC, kNN and LDA, suitable for GridSearchCV from Sklearn."""
 
+from sklearn.svm import SVC
+
 def para_svc():
     """GridSearchCV parameteres for SVC."""
 
@@ -89,17 +91,14 @@ def para_mlpc():
 
     return para_mlpc
 
-def para_dbn():
-    """GridSearchCV parameters for Deep Belief Network."""
-    para_dbn = [{
-        'hidden_layers_structure': [256, 256],
-        'learning_rate_rbm': 0.05,
-        'learning_rate': 0.1,
-        'n_epochs_rbm': 10,
-        'n_iter_backprop': 100,
-        'batch_size': 32,
-        'activation_function': ['relu'],
-        'dropout_p': 0.2
-        }]
+def para_ada():
+    """GridSearchCV parameters for Multi Layer Perceptron."""
+    para_ada = [{
+        'estimator': [SVC(gamma='auto', kernel='rbf')],
+        'learning_rate': [1.0],
+        'algorithm' : ['SAMME'],
+        'n_estimators': [50],
+        'random_state': [None]
+    }]
 
-    return para_dbn
+    return para_ada

@@ -6,11 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.neural_network import BernoulliRBM
-
-from dbn.tensorflow import SupervisedDBNClassification
-
-
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 import sys
 
@@ -22,7 +18,7 @@ Classifier("Support Vector Machine", SVC())
 # Classifier("k-nearest neighbors", KNeighborsClassifier())
 # Classifier("Linear Discriminant Analysis", LDA())
 # Classifier("Neural Network", MLPClassifier())
-Classifier("Deep Belief Network", SupervisedDBNClassification())
+Classifier("ADA Boost", AdaBoostClassifier())
 
 
 
@@ -30,8 +26,8 @@ Classifier("Deep Belief Network", SupervisedDBNClassification())
 mode_list = (mode1(), mode2(), mode3(), mode4(), mode5(), mode6())
 
 # load parameters for grid search from gridSearchParameters.
-# parameters_list = (para_svc(), para_knn(), para_lda())
-parameters_list = (para_dbn())
+# parameters_list = (para_svc(), para_knn(), para_lda(),para_mlpc(),para_rfc(),para_)
+parameters_list = (para_svc() , para_ada())
 
 # Full list of subjects from the study: SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10', 'MM11', 'MM12', 'MM14', 'MM15',
 # 'MM16', 'MM18', 'MM19', 'MM20', 'MM21', 'P02')
