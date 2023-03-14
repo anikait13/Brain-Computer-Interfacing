@@ -28,10 +28,9 @@ def para_knn():
     """GridSearchCV parameters for kNN."""
 
     para_knn = [{
-        'n_neighbors': [3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 20, 21, 25, 30, 31],
-        'weights': ['uniform', 'distance'],
-        'algorithm': ['ball_tree', 'kd_tree'],
-        'leaf_size': [5, 10, 15, 30, 50],
+        'weights': ['distance'],
+        'algorithm': [ 'brute'],
+        'leaf_size': [5, 10, 15, 30],
         'p': [1, 2],
         # 'metric': ('minkowski'),
         # 'metric_params': (),
@@ -40,7 +39,6 @@ def para_knn():
         {
         'n_neighbors': [3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 20, 21, 25, 30, 31],
         'weights': ['uniform', 'distance'],
-        'algorithm': ['brute'],
         'p': [1, 2]}]
     return para_knn
 
@@ -80,7 +78,7 @@ def para_mlpc():
         "hidden_layer_sizes": [6],
         # 'activation': ['relu', 'tanh', 'sgd'],
         'activation': ['logistic','relu','identity'],
-        'solver': ['lbfgs'],
+        'solver': ['lbfgs , Adam'],
         'learning_rate': ['adaptive'],
         'warm_start': [False],
         'early_stopping': [True]

@@ -9,7 +9,7 @@ import mne
 import scipy.io as sio
 import numpy as np
 import os
-from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
@@ -266,8 +266,7 @@ class Dataset:
         prompts_list : dict
             a dictionary, containing chosen prompts as keys 
             and their categories as their respective values. 
-            Take a look at the SilentSpeechClassifier.expVariants
-            module or example.py for working instances.
+
         scale_data : bool
             scales features values with 'Sklearn.StandardScaler()'.
             Some ML algorithms demand scaled data to work properly.

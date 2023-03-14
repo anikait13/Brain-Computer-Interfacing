@@ -4,7 +4,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.preprocessing import LabelEncoder
 
-from modules import DBN
+from dbn.modules import DBN
 
 
 class DBNClassifier(BaseEstimator, ClassifierMixin):

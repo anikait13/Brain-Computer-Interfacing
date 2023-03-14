@@ -27,7 +27,7 @@ mode_list = (mode1(), mode2(), mode3(), mode4(), mode5(), mode6())
 
 # load parameters for grid search from gridSearchParameters.
 # parameters_list = (para_svc(), para_knn(), para_lda(),para_mlpc(),para_rfc(),para_)
-parameters_list = (para_svc() , para_ada())
+parameters_list = (para_svc())
 
 # Full list of subjects from the study: SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10', 'MM11', 'MM12', 'MM14', 'MM15',
 # 'MM16', 'MM18', 'MM19', 'MM20', 'MM21', 'P02')
@@ -41,7 +41,7 @@ scores = []
 # Iterate over subjects, preprocess the data and get scores.
 for subject in Dataset.registry:
 
-    subject.load_data(PATH_TO_DATA, raw=False)
+    subject.load_data(PATH_TO_DATA, raw=True)
     subject.select_channels(channels=60)
     subject.filter_data(lp_freq=None, hp_freq=1, save_filtered_data=False, plot=True)
     subject.prepare_data(mode_list[1], scale_data=True)
@@ -52,7 +52,4 @@ for subject in Dataset.registry:
 
     for cl in Classifier.registry:
         score = cl.classify(X, Y)
-        scores.append(score)
-
-print(scores[3])
 
