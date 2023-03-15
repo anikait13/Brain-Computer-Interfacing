@@ -120,10 +120,10 @@ class Dataset:
             for f in glob.glob("*.cnt"):
                 print(f)
                 self.eeg_data = mne.io.read_raw_cnt(f, preload=True)
-                print(self.eeg_data.info)
                 print(self.eeg_data)
                 # self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger', 'STI 014'])
                 self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger'])
+                print(self.eeg_data)
         else:
             print("Loading filtered data.")
             for f in glob.glob("*-filtered.fif"):
@@ -432,7 +432,7 @@ class Classifier:
         self.algorithm.set_params(**best_parameters)
         print("Best parameters for ", self.name, ":\n", best_parameters)
 
-    def classify(self, X, Y, crval_splits=10, crval_repeats=10):
+    def classify(self, X, Y, crval_splits=6, crval_repeats=10):
         """Classify data.
 
         Notes
