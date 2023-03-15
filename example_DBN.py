@@ -37,6 +37,8 @@ classifier = DBNClassifier(n_hiddens=[25], k=3,
                                loss_ae_kwargs={}, loss_clf_kwargs={},
                                optimizer_ae_kwargs=dict(), optimizer_clf_kwargs=dict(),
                                random_state=42, use_gpu=True, verbose=False)
+
+overall_accuracy = []
 for subject in Dataset.registry:
     subject.load_data(PATH_TO_DATA, raw=True)
     subject.select_channels(channels=60)
@@ -60,5 +62,8 @@ for subject in Dataset.registry:
 
     print('-' * 40 + '\n%DBN Classifier Final \n' + '-' * 40)
     print("Accuracy: %.2f%% (+/- %.2f%%)" % (np.mean(Accuracy), np.std(Accuracy)))
+    overall_accuracy.append(np.mean(Accuracy))
     print("F1 score: %.2f%% (+/- %.2f%%)" % (np.mean(F1), np.std(F1)))
     print("\nConfusion Matrix:\n", np.sum(CFM, axis=0), '\nNumber of instances: ', np.sum(CFM))
+
+print("Accuracy: %.2f%%", overall_accuracy)
