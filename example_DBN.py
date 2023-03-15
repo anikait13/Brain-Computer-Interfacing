@@ -30,20 +30,19 @@ scores = []
 rsk = RepeatedStratifiedKFold(n_splits=6, n_repeats=5)
 classifier = DBNClassifier(n_hiddens=[25], k=3,
                                loss_ae='MSELoss', loss_clf='CrossEntropyLoss',
-                               optimizer_ae='Adam', optimizer_clf='Adam',
+                               optimizer_ae='RMSprop', optimizer_clf='RMSprop',
                                lr_rbm=1e-5, lr_ae=0.01, lr_clf=0.01,
                                epochs_rbm=100, epochs_ae=50, epochs_clf=50,
                                batch_size_rbm=50, batch_size_ae=50, batch_size_clf=50,
                                loss_ae_kwargs={}, loss_clf_kwargs={},
                                optimizer_ae_kwargs=dict(), optimizer_clf_kwargs=dict(),
-                               random_state=42, use_gpu=True, verbose=True, )
-
+                               random_state=42, use_gpu=True, verbose=False)
 for subject in Dataset.registry:
     subject.load_data(PATH_TO_DATA, raw=True)
     subject.select_channels(channels=60)
     subject.filter_data(lp_freq=None, hp_freq=1, save_filtered_data=False, plot=True)
     subject.prepare_data(mode_list[1], scale_data=True)
-    X, Y = subject.find_best_features(feature_limit=100)
+    X, Y = subject.find_best_features(feature_limit=60)
     CFM = []
     Accuracy = []
     F1 = []

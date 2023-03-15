@@ -432,7 +432,7 @@ class Classifier:
         self.algorithm.set_params(**best_parameters)
         print("Best parameters for ", self.name, ":\n", best_parameters)
 
-    def classify(self, X, Y, crval_splits=6, crval_repeats=10):
+    def classify(self, X, Y, crval_splits=10, crval_repeats=10):
         """Classify data.
 
         Notes
