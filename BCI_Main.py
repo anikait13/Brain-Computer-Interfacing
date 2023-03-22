@@ -19,7 +19,7 @@ from sklearn.preprocessing import StandardScaler
 from scipy import stats
 from scipy import signal as sig
 from time import time
-from features import fast_feat_array , pretty_feat_array
+from features import fast_feat_array, pretty_feat_array
 
 
 class Dataset:
@@ -128,13 +128,16 @@ class Dataset:
             print("Loading filtered data.")
             for f in glob.glob("*-filtered.fif"):
                 self.eeg_data = mne.io.read_raw_fif(f, 'standard_1020', preload=True)
-        for f in glob.glob("all_features_ICA.mat"):
+        for f in glob.glob("all_features_noICA.mat"):
             prompts_to_extract = sio.loadmat(f)
+
         self.prompts = prompts_to_extract['all_features'][0, 0]
+        print(self.prompts)
         for f in glob.glob("epoch_inds.mat"):
             self.epoch_inds = sio.loadmat(f, variable_names=('clearing_inds', 'thinking_inds'))
+            # print(self.epoch_inds)
 
-    def select_channels(self, channels=5):
+    def select_channels(self, channels=62):
         """Choose how many or which channels to use.
 
         Notes
@@ -188,9 +191,9 @@ class Dataset:
             Frequency of a low-pass filter. Pass a false value (None, 
             False, 0) to disable the filter.
         hp_freq : int
-            Frequency of a high-pass filter. Pass a false value (None, 
-            False, 0) to disable the filter.
-        save_filtered_data : bool 
+            Frequency of a             False, 0) to disable the filter.
+            high-pass filter. Pass a false value (None,
+        save_filtered_data : bool
             Saves filtered data, so it can be loaded later by load_data().
             Data is stored in subject's data folder. 
         plot : bool
@@ -200,7 +203,7 @@ class Dataset:
         """
         print("Filtering data.")
         if plot:
-            fig = self.eeg_data.compute_psd().plot()
+            fig = self.eeg_data.compute_psd(fmax=200).plot()
             fig.savefig(os.path.join(self.figures_path, self.name + "_raw_signal.png"))
         if hp_freq:
             for idx, eeg_vector in enumerate(self.eeg_data[:][0]):
@@ -212,14 +215,14 @@ class Dataset:
                 self.eeg_data[idx] = sig.filtfilt(b, a, eeg_vector)
         print("Filtering done.")
         if plot:
-            fig = self.eeg_data.compute_psd().plot()
+            fig = self.eeg_data.compute_psd(fmax=200).plot()
             fig.savefig(os.path.join(self.figures_path, self.name + "_filtered_signal.png"))
         if save_filtered_data:
             self.eeg_data.save(self.name + "-filtered.fif", overwrite=True)
-            print("Filtered data saved as " + self.name + "-filtered.fif")
+            print("Filtered data saved as " + self.name + "-filtered_eeg.fif")
 
     def ica(self, ica_type='extensive'):
-        """Exclude components using Independent Component Analysis.
+        """Exclude components using Independent Component Analysis.rsk
 
         Notes
         -----
@@ -282,6 +285,7 @@ class Dataset:
         def _calculate_features(condition_inds, prompts_list):
             print("Calculating features.")
             offset = int(self.eeg_data.info["sfreq"] / 2)
+            print('Offset is : ', offset)
             X = []
             for i, prompt in enumerate(self.prompts["prompts"][0]):
                 if prompt[0] in prompts_list:
@@ -309,8 +313,6 @@ class Dataset:
             X.extend(_calculate_features("thinking_inds", Y))
             Y = np.hstack([np.repeat('rest', len(X) / 2), np.repeat('active', len(X) / 2)])
 
-
-
         print("Features calculated.\nDone in %0.3fs" % (time() - t0))
         self.X = np.asarray(X)
         self.Y = np.hstack(Y)
@@ -321,7 +323,7 @@ class Dataset:
 
         return self.X['feature_value'], self.Y
 
-    def find_best_features(self, feature_limit=30):
+    def find_best_features(self, feature_limit=30 , single_channel = True):
         """Select n best features.
 
         Notes
@@ -341,43 +343,48 @@ class Dataset:
         Y : ndarray
             1D array of labels with 'str' type.
         """
-        X = self.X
-        Y = self.Y
+        if single_channel:
+            X = self.X
+            Y = self.Y
 
-        print("Calculating ANOVA.")
-        selector = SelectKBest(score_func=f_classif, k=feature_limit)
+            print("Calculating ANOVA.")
+            selector = SelectKBest(score_func=f_classif, k=feature_limit)
 
-        selector.fit(X['feature_value'], Y)
-        print(selector.get_support([True]))
+            selector.fit(X['feature_value'], Y)
+            print(selector.get_support([True]))
 
-        chosen = []
-        for idx in selector.get_support([True]):
-            chosen.append(
-                [selector.scores_[idx], selector.pvalues_[idx], X[0, idx]['channel'], X[0, idx]['feature_name']])
+            chosen = []
+            for idx in selector.get_support([True]):
+                chosen.append(
+                    [selector.scores_[idx], selector.pvalues_[idx], X[0, idx]['channel'], X[0, idx]['feature_name']])
 
-        chosen.sort(key=lambda s: s[1])
-        for chsn in chosen:
-            print("F= %0.3f\tp = %0.3f\t channel = %s\t fname = %s" % (chsn[0], chsn[1], chsn[2], chsn[3]))
+            chosen.sort(key=lambda s: s[1])
+            for chsn in chosen:
+                print("F= %0.3f\tp = %0.3f\t channel = %s\t fname = %s" % (chsn[0], chsn[1], chsn[2], chsn[3]))
 
-        trans_chosen = np.transpose(chosen)
-        for chosen, text in (
-                (trans_chosen[2], 'Scored by channels: '),
-                (trans_chosen[3], 'Scored by features: ')):
-            unique, counts = np.unique(chosen, return_counts=True)
-            sorted_counts = sorted(dict(zip(unique, counts)).items(), reverse=True, key=lambda s: s[1])
-            print(text, sorted_counts)
+            trans_chosen = np.transpose(chosen)
+            for chosen, text in (
+                    (trans_chosen[2], 'Scored by channels: '),
+                    (trans_chosen[3], 'Scored by features: ')):
+                unique, counts = np.unique(chosen, return_counts=True)
+                sorted_counts = sorted(dict(zip(unique, counts)).items(), reverse=True, key=lambda s: s[1])
+                print(text, sorted_counts)
 
-        print("ANOVA calculated, ", len(X[0]) - feature_limit, "features removed,", feature_limit, " features left.")
-        X = selector.transform(X)
+            print("ANOVA calculated, ", len(X[0]) - feature_limit, "features removed,", feature_limit, " features left.")
+            X = selector.transform(X)
 
-        return X['feature_value'], Y
+            return X['feature_value'], Y
+        else:
+            # TODO multiple feature selecttion
+            print("in progress")
 
 
 
-# TODO NN compatibility 
+
+
+# TODO NN compatibility
 class Classifier:
     """Prepare ML models and classify data.
-
     Notes
     -----
     The class provides methods for parameters optimisation
@@ -404,11 +411,13 @@ class Classifier:
 
     """
     registry = []
+    instances = 0
 
     def __init__(self, name, algorithm):
         self.registry.append(self)
         self.name = name
         self.algorithm = algorithm
+        Classifier.instances += 1
 
     def grid_search_sklearn(self, X, Y, parameters):
         """Optimise classifier parameters using exhaustive search.
@@ -432,7 +441,7 @@ class Classifier:
         self.algorithm.set_params(**best_parameters)
         print("Best parameters for ", self.name, ":\n", best_parameters)
 
-    def classify(self, X, Y, crval_splits=6, crval_repeats=10):
+    def classify(self, X, Y, crval_splits=6, crval_repeats=2):
         """Classify data.
 
         Notes

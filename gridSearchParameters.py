@@ -7,7 +7,7 @@ def para_svc():
     """GridSearchCV parameteres for SVC."""
 
     para_svc = [{
-        'C': [10000, 1000, 100, 10, 1],
+        'C': [1000, 100, 10, 1],
         'cache_size': [1000],
         # 'class_weight': [],
         # 'coef0': [],
@@ -77,8 +77,8 @@ def para_mlpc():
     para_mlpc = [{
         "hidden_layer_sizes": [6],
         # 'activation': ['relu', 'tanh', 'sgd'],
-        'activation': ['logistic','relu','identity'],
-        'solver': ['lbfgs , Adam'],
+        'activation': ['logistic', 'relu', 'identity'],
+        'solver': ['lbfgs', 'adam'],
         'learning_rate': ['adaptive'],
         'warm_start': [False],
         'early_stopping': [True]

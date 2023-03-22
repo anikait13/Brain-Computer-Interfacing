@@ -18,10 +18,10 @@ def mode1():
 def mode2():
     """words vs words"""
     mode = {
-        'gnaw' : 'gnaw',
-        'knew' : 'knew',
-        'pat' : 'pat',
-        'pot' : 'pot'}
+        'gnaw': 'gnaw',
+        'knew': 'knew',
+        'pat': 'pat',
+        'pot': 'pot'}
     return mode
 
 def mode3():
