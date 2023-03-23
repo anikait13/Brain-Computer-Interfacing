@@ -50,9 +50,8 @@ for subject in Dataset.registry:
     subject.load_data(PATH_TO_DATA, raw=True)
     subject.select_channels(channels=62)
     subject.filter_data(lp_freq=50, hp_freq=None, save_filtered_data=True, plot=True)
-    subject.prepare_data(mode_list[1], scale_data=True)
+    A, B = subject.prepare_data(mode_list[1], scale_data=True)
     X, Y = subject.find_best_features(feature_limit=25)
-
     for idx, cl in enumerate(Classifier.registry):
         cl.grid_search_sklearn(X, Y, parameters_list[idx])
         print(parameters_list)

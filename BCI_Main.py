@@ -123,7 +123,8 @@ class Dataset:
                 print(self.eeg_data)
                 # self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger', 'STI 014'])
                 self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger'])
-                print(self.eeg_data)
+                print(len(self.eeg_data.ch_names))
+
         else:
             print("Loading filtered data.")
             for f in glob.glob("*-filtered.fif"):
@@ -132,7 +133,7 @@ class Dataset:
             prompts_to_extract = sio.loadmat(f)
 
         self.prompts = prompts_to_extract['all_features'][0, 0]
-        print(self.prompts)
+        # print(self.prompts)
         for f in glob.glob("epoch_inds.mat"):
             self.epoch_inds = sio.loadmat(f, variable_names=('clearing_inds', 'thinking_inds'))
             # print(self.epoch_inds)
@@ -165,7 +166,8 @@ class Dataset:
         Dataset.select_channels(channels=['FP1', 'FPZ', 'FP2', 'AF3'])
         
         """
-        # TODO: check if passed channels exist. 
+        # TODO: check if passed channels exist.
+
         if type(channels) is int:
             import random
             picked_channels = random.sample(range(len(self.eeg_data.ch_names)), channels)
@@ -296,6 +298,8 @@ class Dataset:
                         epoch = self.eeg_data[idx][0][0][start:end]
                         channel_set.extend(fast_feat_array(epoch, ch))
                     X.append(channel_set)
+
+            np.savetxt("%s/features_calculated.txt" % self.dataPath, np.array(X), fmt='%s')
             return X
 
         t0 = time()
@@ -323,7 +327,7 @@ class Dataset:
 
         return self.X['feature_value'], self.Y
 
-    def find_best_features(self, feature_limit=30 , single_channel = True):
+    def find_best_features(self, feature_limit=30, single_channel=True):
         """Select n best features.
 
         Notes
@@ -358,6 +362,9 @@ class Dataset:
                 chosen.append(
                     [selector.scores_[idx], selector.pvalues_[idx], X[0, idx]['channel'], X[0, idx]['feature_name']])
 
+            with open("/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/chosen_feats.csv", "ab") as f:
+                np.savetxt(f, np.array(chosen), fmt='%s')
+
             chosen.sort(key=lambda s: s[1])
             for chsn in chosen:
                 print("F= %0.3f\tp = %0.3f\t channel = %s\t fname = %s" % (chsn[0], chsn[1], chsn[2], chsn[3]))
@@ -370,16 +377,18 @@ class Dataset:
                 sorted_counts = sorted(dict(zip(unique, counts)).items(), reverse=True, key=lambda s: s[1])
                 print(text, sorted_counts)
 
-            print("ANOVA calculated, ", len(X[0]) - feature_limit, "features removed,", feature_limit, " features left.")
+            print("ANOVA calculated, ", len(X[0]) - feature_limit, "features removed,", feature_limit,
+                  " features left.")
             X = selector.transform(X)
 
-            return X['feature_value'], Y
+            np.savetxt("%s/X_selected.csv" % self.dataPath, np.array(X), fmt='%s')
+            np.savetxt("%s/Y_selected.csv" % self.dataPath, np.array(Y), fmt='%s')
+
+
+            return chosen, X['feature_value'], Y
         else:
             # TODO multiple feature selecttion
             print("in progress")
-
-
-
 
 
 # TODO NN compatibility

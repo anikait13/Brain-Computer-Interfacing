@@ -311,4 +311,5 @@ def fast_feat_array(sequence, channel):
         (channel, 'mdf', fdf.mode_freq())],
         dtype=[('channel', 'U4'), ('feature_name', 'U4'), ('feature_value', 'f8')])
 
+
     return feat_array

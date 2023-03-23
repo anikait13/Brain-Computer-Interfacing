@@ -50,10 +50,10 @@ overall_accuracy = []
 
 for subject in Dataset.registry:
     subject.load_data(PATH_TO_DATA, raw=True)
-    subject.select_channels(channels=62)
+    subject.select_channels(['FC6', 'FT8', 'C5', 'CP3', 'P3', 'T7', 'CP5', 'C3', 'CP1', 'C4'])
     subject.filter_data(lp_freq=1, hp_freq=50, save_filtered_data=True, plot=True)
     subject.prepare_data(mode_list[1], scale_data=True)
-    X, Y = subject.find_best_features(93)
+    chosen, X, Y = subject.find_best_features(60)
     CFM = []
     Accuracy = []
     F1 = []
