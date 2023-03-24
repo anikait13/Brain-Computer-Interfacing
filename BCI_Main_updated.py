@@ -99,7 +99,7 @@ class Dataset:
         It uses files:
             *.cnt                      raw EEG data
             *-filtered.fif             (optional) filtered data
-            all_features_simple.mat    epoch time intervals
+            all_features_simple.mat    epoch time intervals'
             epoch_inds.mat             ordered list of prompts
 
         Parameters
@@ -120,11 +120,10 @@ class Dataset:
             for f in glob.glob("*.cnt"):
                 print(f)
                 self.eeg_data = mne.io.read_raw_cnt(f, preload=True)
-                print(self.eeg_data)
                 # self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger', 'STI 014'])
                 self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger'])
-                print(len(self.eeg_data.ch_names))
-
+                self.eeg_dict = {channel: i + 1 for i, channel in enumerate(self.eeg_data.ch_names)}
+                print(self.eeg_dict)
         else:
             print("Loading filtered data.")
             for f in glob.glob("*-filtered.fif"):
@@ -209,11 +208,11 @@ class Dataset:
             fig.savefig(os.path.join(self.figures_path, self.name + "_raw_signal.png"))
         if hp_freq:
             for idx, eeg_vector in enumerate(self.eeg_data[:][0]):
-                [b, a] = sig.butter(4, hp_freq / self.eeg_data.info['sfreq'] / 2, btype='highpass')
+                [b, a] = sig.butter(4, hp_freq, btype='high', analog=False, fs=self.eeg_data.info['sfreq'])
                 self.eeg_data[idx] = sig.filtfilt(b, a, eeg_vector)
         if lp_freq:
             for idx, eeg_vector in enumerate(self.eeg_data[:][0]):
-                [b, a] = sig.butter(4, lp_freq / self.eeg_data.info['sfreq'] / 2, btype='lowpass')
+                [b, a] = sig.butter(4, lp_freq, btype='low', analog=False, fs=self.eeg_data.info['sfreq'])
                 self.eeg_data[idx] = sig.filtfilt(b, a, eeg_vector)
         print("Filtering done.")
         if plot:
@@ -287,7 +286,6 @@ class Dataset:
         def _calculate_features(condition_inds, prompts_list):
             print("Calculating features.")
             offset = int(self.eeg_data.info["sfreq"] / 2)
-            print('Offset is : ', offset)
             X = []
             for i, prompt in enumerate(self.prompts["prompts"][0]):
                 if prompt[0] in prompts_list:
@@ -297,9 +295,10 @@ class Dataset:
                     for idx, ch in enumerate(self.eeg_data.ch_names):
                         epoch = self.eeg_data[idx][0][0][start:end]
                         channel_set.extend(fast_feat_array(epoch, ch))
+
                     X.append(channel_set)
 
-            np.savetxt("%s/features_calculated.txt" % self.dataPath, np.array(X), fmt='%s')
+            np.savetxt("%s/features_calculated.csv" % self.dataPath, np.array(X), fmt='%s')
             return X
 
         t0 = time()
@@ -355,8 +354,6 @@ class Dataset:
             selector = SelectKBest(score_func=f_classif, k=feature_limit)
 
             selector.fit(X['feature_value'], Y)
-            print(selector.get_support([True]))
-
             chosen = []
             for idx in selector.get_support([True]):
                 chosen.append(
@@ -384,14 +381,9 @@ class Dataset:
             np.savetxt("%s/X_selected.csv" % self.dataPath, np.array(X), fmt='%s')
             np.savetxt("%s/Y_selected.csv" % self.dataPath, np.array(Y), fmt='%s')
 
-
-            return chosen, X['feature_value'], Y
-        else:
-            # TODO multiple feature selecttion
-            print("in progress")
+            return X['feature_value'], Y, list(selector.get_support([True]))
 
 
-# TODO NN compatibility
 class Classifier:
     """Prepare ML models and classify data.
     Notes

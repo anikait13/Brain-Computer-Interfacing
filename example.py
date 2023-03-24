@@ -1,6 +1,6 @@
 from gridSearchParameters import *
 from expVariants import *
-from BCI_Main import Dataset, Classifier
+from BCI_Main_updated import Dataset, Classifier
 import numpy as np
 
 from sklearn.metrics import accuracy_score
@@ -36,50 +36,45 @@ mode_list = (mode1(), mode2(), mode3(), mode4(), mode5(), mode6())
 # parameters_list = (para_svc(), para_knn(), para_lda(),para_mlpc(),para_rfc(),para_)
 parameters_list = (para_svc())
 
-#channels
-eeg_channels = ('FP1', 'FPZ', 'FP2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1', 'FZ', 'F2', 'F4', 'F6', 'F8', 'FT7', 'FC5',
-                'FC3', 'FC1', 'FCZ', 'FC2', 'FC4', 'FC6', 'FT8', 'T7', 'C5', 'C3', 'C1', 'CZ', 'C2','C4', 'C6', 'T8',
-                'M1', 'TP7', 'CP5', 'CP3', 'CP1', 'CPZ', 'CP2', 'CP4', 'CP6', 'TP8', 'M2', 'P7', 'P5', 'P3', 'P1', 'PZ',
-                'P2', 'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3', 'POZ', 'PO4', 'PO6', 'PO8', 'O1', 'OZ',
-                'O2')
-print(eeg_channels.index('FC4'))
+# channels
+# eeg_channels = ('FP1', 'FPZ', 'FP2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1', 'FZ', 'F2', 'F4', 'F6', 'F8', 'FT7', 'FC5',
+#                 'FC3', 'FC1', 'FCZ', 'FC2', 'FC4', 'FC6', 'FT8', 'T7', 'C5', 'C3', 'C1', 'CZ', 'C2','C4', 'C6', 'T8',
+#                 'M1', 'TP7', 'CP5', 'CP3', 'CP1', 'CPZ', 'CP2', 'CP4', 'CP6', 'TP8', 'M2', 'P7', 'P5', 'P3', 'P1', 'PZ',
+#                 'P2', 'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3', 'POZ', 'PO4', 'PO6', 'PO8', 'O1', 'OZ',
+#                 'O2')
+
 # SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10', 'MM11', 'MM12', 'MM14', 'MM15',
 #             'MM16', 'MM18', 'MM19', 'MM20', 'MM21')
 SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10')
 
-scores = []
-# Iterate over subjects, preprocess the data and get scores.
-overall_accuracy = []
-features_arr = []
 
-overall_accuracy = []
 for test_subject in SUBJECTS:
     print(f"Testing subject {test_subject}")
     train_subjects = [subj for subj in SUBJECTS if subj != test_subject]
     print(train_subjects)
+
     scores = []
+    overall_accuracy = []
     features_arr = []
+
     for subject in train_subjects:
         Dataset(subject)
-    first_run = True
+
     for subject in Dataset.registry:
-        if first_run:
-            first_run = False
-            print("Training for : ", subject.name)
-            raw = subject.load_data(PATH_TO_DATA, raw=True)
-            subject.select_channels(channels=64)
-            subject.filter_data(lp_freq=50, hp_freq=1, save_filtered_data=True, plot=True)
-            X, Y = subject.prepare_data(mode_list[1], scale_data=True)
-        features_arr.append((X, Y))
-        feature_chosen, X, Y = subject.find_best_features(feature_limit=20, single_channel=True)
+        print("Training for : ", subject.name)
+        raw = subject.load_data(PATH_TO_DATA, raw=True)
+        subject.select_channels(channels=62)
+        subject.filter_data(lp_freq=50, hp_freq=1, save_filtered_data=True, plot=True)
+        subject.prepare_data(mode_list[1], scale_data=True)
+        X, Y, selected_feats = subject.find_best_features(feature_limit=20, single_channel=True)
+        combined_list = list(set(features_arr + selected_feats))
+        features_arr = sorted(combined_list)
+        print(features_arr)
+    print(features_arr)
 
 
+    # TODO : NEED to take unique of all calculated features and then calculate those for the missing values
 
-
-    # Concatenate all features and labels from the training subjects
-    X_train = np.concatenate([X for X, _ in features_arr], axis=0)
-    Y_train = np.concatenate([Y for _, Y in features_arr], axis=0)
-    subject.find_best_features(feature_limit=100, single_channel=True)
 
     print()
     # feature_chosen, X, Y = subject.find_best_features(X_train,feature_limit=1488, single_channel=True)
@@ -118,3 +113,9 @@ for test_subject in SUBJECTS:
         print(Accuracy)
         CFM.append(confusion_matrix(Y_test, predicted))
 
+
+def combine_features(features, new_features):
+    print("working")
+    # TODO the need append new features as they come, take unique of all complete table values for (unique_features(
+    #  OLD U NEW) x 48), calculate values for subjects' FEATURES and make an overall table to feed into the
+    #  classifier for training

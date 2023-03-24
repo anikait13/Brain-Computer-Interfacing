@@ -180,7 +180,7 @@ class Dataset:
             # TODO: check if works
         print(self.eeg_data.info['ch_names'])
 
-    def filter_data(self, lp_freq=49, hp_freq=1, save_filtered_data=False, plot=True):
+    def filter_data(self, lp_freq, hp_freq, save_filtered_data=False, plot=True):
         """Filter subject's EEG data.
 
         Notes
@@ -193,8 +193,9 @@ class Dataset:
             Frequency of a low-pass filter. Pass a false value (None, 
             False, 0) to disable the filter.
         hp_freq : int
-            Frequency of a             False, 0) to disable the filter.
-            high-pass filter. Pass a false value (None,
+            Frequency of a  high-pass filter.
+            (False, 0) to disable the filter.
+            Pass a false value (None,
         save_filtered_data : bool
             Saves filtered data, so it can be loaded later by load_data().
             Data is stored in subject's data folder. 
@@ -209,11 +210,11 @@ class Dataset:
             fig.savefig(os.path.join(self.figures_path, self.name + "_raw_signal.png"))
         if hp_freq:
             for idx, eeg_vector in enumerate(self.eeg_data[:][0]):
-                [b, a] = sig.butter(4, hp_freq / self.eeg_data.info['sfreq'] / 2, btype='highpass')
+                [b, a] = sig.butter(4, hp_freq, btype='high', analog=False, fs=self.eeg_data.info['sfreq'])
                 self.eeg_data[idx] = sig.filtfilt(b, a, eeg_vector)
         if lp_freq:
             for idx, eeg_vector in enumerate(self.eeg_data[:][0]):
-                [b, a] = sig.butter(4, lp_freq / self.eeg_data.info['sfreq'] / 2, btype='lowpass')
+                [b, a] = sig.butter(4, lp_freq, btype='low', analog=False, fs=self.eeg_data.info['sfreq'])
                 self.eeg_data[idx] = sig.filtfilt(b, a, eeg_vector)
         print("Filtering done.")
         if plot:
