@@ -1,6 +1,6 @@
 import numpy as np
 from torch import save
-
+import os
 from expVariants import *
 from BCI_Main import Dataset, Classifier
 from dbn.DBNAC import DBNClassifier
@@ -23,6 +23,9 @@ mode_list = (mode1(), mode2(), mode3(), mode4(), mode5(), mode6())
 SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10', 'MM11', 'MM12', 'MM14', 'MM15',
             'MM16', 'MM18', 'MM19', 'MM20', 'MM21')
 
+for subject in SUBJECTS:
+    os.mkdir(f"Data/{subject}")
+
 # initialize subjects' instances.
 for subject in SUBJECTS:
     Dataset(subject)
@@ -36,7 +39,7 @@ rsk = RepeatedStratifiedKFold(n_splits=6, n_repeats=5)
 
 feature_scores = []
 
-classifier = DBNClassifier(n_hiddens=[62], k=3,
+classifier = DBNClassifier(n_hiddens=[25,25,25], k=3,
                            loss_ae='MSELoss', loss_clf='CrossEntropyLoss',
                            optimizer_ae='Adam', optimizer_clf='Adam',
                            lr_rbm=1e-5, lr_ae=1e-2, lr_clf=1e-2,
@@ -51,7 +54,7 @@ overall_accuracy = []
 for subject in Dataset.registry:
     subject.load_data(PATH_TO_DATA, raw=True)
     subject.select_channels(['FC6', 'FT8', 'C5', 'CP3', 'P3', 'T7', 'CP5', 'C3', 'CP1', 'C4'])
-    subject.filter_data(lp_freq=1, hp_freq=50, save_filtered_data=True, plot=True)
+    subject.filter_data(lp_freq=80, hp_freq=1, save_filtered_data=True, plot=True)
     subject.prepare_data(mode_list[1], scale_data=True)
     chosen, X, Y = subject.find_best_features(60)
     CFM = []

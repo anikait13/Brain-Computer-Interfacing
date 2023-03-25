@@ -20,6 +20,7 @@ from scipy import stats
 from scipy import signal as sig
 from time import time
 from features import fast_feat_array, pretty_feat_array
+import csv
 
 
 class Dataset:
@@ -84,24 +85,17 @@ class Dataset:
     figures_path = os.path.dirname(os.path.abspath(__file__)) + '/figures'
     os.makedirs(figures_path, exist_ok=True)
 
-    def __init__(self, subject):
-        self.name = subject
-        self.registry.append(self)
-        # TODO is self in self.registry neccesary 
-
     def load_data(self, path_to_data, raw=True):
         """Load subject data from the Kara One dataset.
-
         Notes
         -----
         By default, the function does not load all the channels, it excludes
-        ['EKG', 'EMG', 'Trigger', 'STI 014']. 
+        ['EKG', 'EMG', 'Trigger', 'STI 014'].
         It uses files:
             *.cnt                      raw EEG data
             *-filtered.fif             (optional) filtered data
             all_features_simple.mat    epoch time intervals'
             epoch_inds.mat             ordered list of prompts
-
         Parameters
         ----------
         path_to_data : str
@@ -109,7 +103,7 @@ class Dataset:
             e.g. "/home/USER_NAME/KARA ONE/p/".
         raw : bool
             If true, loads original data (*.cnt). Otherwise loads
-            *-filtered.fif, filtered by 
+            *-filtered.fif, filtered by
             filter_dat(save_filtered_data=True) in previous runs.
         """
         self.dataPath = path_to_data + self.name
@@ -136,6 +130,13 @@ class Dataset:
         for f in glob.glob("epoch_inds.mat"):
             self.epoch_inds = sio.loadmat(f, variable_names=('clearing_inds', 'thinking_inds'))
             # print(self.epoch_inds)
+
+    def __init__(self, subject):
+        self.name = subject
+        self.registry.append(self)
+        # TODO is self in self.registry neccesary 
+
+
 
     def select_channels(self, channels=62):
         """Choose how many or which channels to use.
@@ -298,8 +299,10 @@ class Dataset:
 
                     X.append(channel_set)
 
-            np.savetxt("%s/features_calculated.csv" % self.dataPath, np.array(X), fmt='%s')
-            return X
+            # # with open("%s/all_features_calculated.csv" % self.dataPath, "a", newline="") as f:
+            #     writer = csv.writer(f)
+            #     writer.writerows(X)
+            # return X
 
         t0 = time()
         Y = []
@@ -315,6 +318,7 @@ class Dataset:
             X = _calculate_features("clearing_inds", Y)
             X.extend(_calculate_features("thinking_inds", Y))
             Y = np.hstack([np.repeat('rest', len(X) / 2), np.repeat('active', len(X) / 2)])
+
 
         print("Features calculated.\nDone in %0.3fs" % (time() - t0))
         self.X = np.asarray(X)
@@ -359,9 +363,6 @@ class Dataset:
                 chosen.append(
                     [selector.scores_[idx], selector.pvalues_[idx], X[0, idx]['channel'], X[0, idx]['feature_name']])
 
-            with open("/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/chosen_feats.csv", "ab") as f:
-                np.savetxt(f, np.array(chosen), fmt='%s')
-
             chosen.sort(key=lambda s: s[1])
             for chsn in chosen:
                 print("F= %0.3f\tp = %0.3f\t channel = %s\t fname = %s" % (chsn[0], chsn[1], chsn[2], chsn[3]))
@@ -377,9 +378,6 @@ class Dataset:
             print("ANOVA calculated, ", len(X[0]) - feature_limit, "features removed,", feature_limit,
                   " features left.")
             X = selector.transform(X)
-
-            np.savetxt("%s/X_selected.csv" % self.dataPath, np.array(X), fmt='%s')
-            np.savetxt("%s/Y_selected.csv" % self.dataPath, np.array(Y), fmt='%s')
 
             return X['feature_value'], Y, list(selector.get_support([True]))
 

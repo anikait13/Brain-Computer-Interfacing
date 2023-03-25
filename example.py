@@ -45,7 +45,7 @@ parameters_list = (para_svc())
 
 # SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10', 'MM11', 'MM12', 'MM14', 'MM15',
 #             'MM16', 'MM18', 'MM19', 'MM20', 'MM21')
-SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10')
+SUBJECTS = ('MM11', 'MM12', 'MM14', 'MM15', 'MM16', 'MM18', 'MM19', 'MM20', 'MM21')
 
 
 for test_subject in SUBJECTS:
@@ -70,13 +70,10 @@ for test_subject in SUBJECTS:
         combined_list = list(set(features_arr + selected_feats))
         features_arr = sorted(combined_list)
         print(features_arr)
-    print(features_arr)
+
+    # for subject in Dataset.registry:
 
 
-    # TODO : NEED to take unique of all calculated features and then calculate those for the missing values
-
-
-    print()
     # feature_chosen, X, Y = subject.find_best_features(X_train,feature_limit=1488, single_channel=True)
     # grid_search = GridSearchCV(SVC(), para_svc(), n_jobs=-2, error_score=0, verbose=0)
     # grid_search.fit(X_train, Y_train)
@@ -87,35 +84,35 @@ for test_subject in SUBJECTS:
     # clf.set_params(**best_parameters)
     # print("Best parameters for SVC :\n", best_parameters)
     # clf.fit(X_train, Y_train)
-    for idx, clf in enumerate(Classifier.registry):
-        clf.grid_search_sklearn(X_train, Y_train, parameters_list[idx])
-        print(parameters_list)
+    # for idx, clf in enumerate(Classifier.registry):
+    #     clf.grid_search_sklearn(X_train, Y_train, parameters_list[idx])
+    #     print(parameters_list)
+    #
+    # for clf in Classifier.registry:
+    #     Accuracy = []
+    #     F1 = []
+    #     CFM = []
+    #     score = clf.classify(X_train, Y_train)
+    #     overall_accuracy.append(score[3])
+    #     print(score[3])
+    #     Dataset(test_subject)
+    #     subject = Dataset.registry[-1]
+    #     raw = subject.load_data(PATH_TO_DATA, raw=True)
+    #     subject.select_channels(channels=62)
+    #     subject.filter_data(lp_freq=50, hp_freq=1, save_filtered_data=True, plot=True)
+    #     X_test, Y_test = subject.prepare_data(mode_list[1], scale_data=True)
+    #     predicted = clf.predict(X_test)
+    #     Accuracy.append(accuracy_score(Y_test, predicted) * 100)
+    #     F1.append(f1_score(Y_test, predicted, average='macro') * 100)
+    #     print("we guessed", predicted)
+    #     print("the answer was ", Y_test)
+    #     print(confusion_matrix(Y_test, predicted))
+    #     print(Accuracy)
+    #     CFM.append(confusion_matrix(Y_test, predicted))
+    #
 
-    for clf in Classifier.registry:
-        Accuracy = []
-        F1 = []
-        CFM = []
-        score = clf.classify(X_train, Y_train)
-        overall_accuracy.append(score[3])
-        print(score[3])
-        Dataset(test_subject)
-        subject = Dataset.registry[-1]
-        raw = subject.load_data(PATH_TO_DATA, raw=True)
-        subject.select_channels(channels=62)
-        subject.filter_data(lp_freq=50, hp_freq=1, save_filtered_data=True, plot=True)
-        X_test, Y_test = subject.prepare_data(mode_list[1], scale_data=True)
-        predicted = clf.predict(X_test)
-        Accuracy.append(accuracy_score(Y_test, predicted) * 100)
-        F1.append(f1_score(Y_test, predicted, average='macro') * 100)
-        print("we guessed", predicted)
-        print("the answer was ", Y_test)
-        print(confusion_matrix(Y_test, predicted))
-        print(Accuracy)
-        CFM.append(confusion_matrix(Y_test, predicted))
+# def combine_features(features, new_features):
 
-
-def combine_features(features, new_features):
-    print("working")
     # TODO the need append new features as they come, take unique of all complete table values for (unique_features(
     #  OLD U NEW) x 48), calculate values for subjects' FEATURES and make an overall table to feed into the
     #  classifier for training

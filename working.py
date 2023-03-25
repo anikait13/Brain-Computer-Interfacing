@@ -35,8 +35,7 @@ parameters_list = (para_svc())
 
 
 #MM09 outlier bad
-SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10', 'MM11', 'MM12', 'MM14', 'MM15',
-            'MM16', 'MM18', 'MM19')
+SUBJECTS = ('MM20', 'MM21')
 
 # initialize subjects' instances.
 for subject in SUBJECTS:

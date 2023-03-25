@@ -322,6 +322,8 @@ class Dataset:
         self.X = np.asarray(X)
         self.Y = np.hstack(Y)
 
+        np.savetxt("%s/Y.csv" % self.dataPath, np.array(Y), fmt='%s')
+
         if scale_data:
             print("Scaling data.")
             self.X['feature_value'] = StandardScaler().fit_transform(self.X['feature_value'])
