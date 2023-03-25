@@ -81,7 +81,7 @@ class Dataset:
         for label in range(self.prompt_len):
             array = np.array(pd.read_csv(
                 '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/CSV/%s/%s.csv' % (self.name, label)))
-            normalized_data = MinMaxScaler().fit_transform(array)
+            normalized_data = StandardScaler().fit_transform(array)
             print(normalized_data)
             # TODO which scaler to use
             normalized_data = np.reshape(normalized_data, (63, 1197))
