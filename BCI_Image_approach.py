@@ -4,20 +4,28 @@
 (openly available EEG data from an imagined speech research). 
 """
 
-import glob
 import mne
 import scipy.io as sio
 import numpy as np
+import cv2
+
+import glob
 import os
+
 from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import GridSearchCV
+
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
+from PIL import Image as im
+
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy import stats
+from scipy import misc
+
 from scipy import signal as sig
 from time import time
 from features import fast_feat_array, pretty_feat_array
@@ -43,13 +51,18 @@ class Dataset:
         self.dataPath = path_to_data + self.name
         print(self.dataPath)
         os.chdir(self.dataPath)
+
+        self.prompts = np.loadtxt("%s/Y.csv" % self.dataPath, dtype=str)
+        print(self.prompts)
+        self.prompt_len = len(self.prompts)
+        self.dimension = self.prompt_len
+
+
         if raw:
-            self.prompts = np.loadtxt("%s/Y.csv" % self.dataPath, dtype=str)
-            print(self.prompts)
-            print("Converting to 64 X 1172 matrix...")
+            print("Converting to 63 X 1197 matrix...")
             mat = sio.loadmat("%s/all_features_ICA.mat" % self.dataPath)
 
-            for label in range(len(self.prompts)):
+            for label in range(self.prompt_len):
                 label_mat = mat['all_features']['eeg_features'][0][0][0][0][0][0][label]
                 with open('%s/Data/%s/%i.csv' % ('/Users/anikait/Desktop/builds/Brain-Computer-Interfacing', self.name,
                                                  label), "w") as csv_file:
@@ -58,60 +71,24 @@ class Dataset:
                         writer.writerow(line)
 
         else:
-            print("Loading filtered data.")
-            for f in glob.glob("*-filtered.fif"):
-                self.eeg_data = mne.io.read_raw_fif(f, 'standard_1020', preload=True)
+            pass
 
-    def find_best_features(self, feature_limit=30, single_channel=True):
-        """Select n best features.
-
-        Notes
-        -----
-        Reduces dimensionality and redundancy of features. 
-        The implementation is based on Anova.
-
-        Parameters
-        ----------
-        feature_limit : int
-            Number of features to leave. 
-
-        Returns
-        -------
-        X :ndarray
-            2d array of signal features with 'float' type.
-        Y : ndarray
-            1D array of labels with 'str' type.
+    def csvtoimage(self):
+        """Convert csv to image
+            takes csv file and convert it to image
+            input dimension as 63 to make a 63 X 1197 image
         """
-        if single_channel:
-            X = self.X
-            Y = self.Y
-
-            print("Calculating ANOVA.")
-            selector = SelectKBest(score_func=f_classif, k=feature_limit)
-
-            selector.fit(X['feature_value'], Y)
-            chosen = []
-            for idx in selector.get_support([True]):
-                chosen.append(
-                    [selector.scores_[idx], selector.pvalues_[idx], X[0, idx]['channel'], X[0, idx]['feature_name']])
-
-            chosen.sort(key=lambda s: s[1])
-            for chsn in chosen:
-                print("F= %0.3f\tp = %0.3f\t channel = %s\t fname = %s" % (chsn[0], chsn[1], chsn[2], chsn[3]))
-
-            trans_chosen = np.transpose(chosen)
-            for chosen, text in (
-                    (trans_chosen[2], 'Scored by channels: '),
-                    (trans_chosen[3], 'Scored by features: ')):
-                unique, counts = np.unique(chosen, return_counts=True)
-                sorted_counts = sorted(dict(zip(unique, counts)).items(), reverse=True, key=lambda s: s[1])
-                print(text, sorted_counts)
-
-            print("ANOVA calculated, ", len(X[0]) - feature_limit, "features removed,", feature_limit,
-                  " features left.")
-            X = selector.transform(X)
-
-            return X['feature_value'], Y, list(selector.get_support([True]))
+        for label in range(self.prompt_len):
+            array = np.array(pd.read_csv(
+                '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/CSV/%s/%s.csv' % (self.name, label)))
+            normalized_data = MinMaxScaler().fit_transform(array)
+            print(normalized_data)
+            # TODO which scaler to use
+            normalized_data = np.reshape(normalized_data, (63, 1197))
+            normalized_data = (normalized_data * 255).astype(np.uint8)  # Convert to uint8
+            data = im.fromarray(normalized_data)
+            data.save(
+                '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png' % (self.name, label))
 
 
 class Classifier:
@@ -137,7 +114,7 @@ class Classifier:
     Methods
     -------
     grid_search_sklearn(self, X, Y, parameters)
-        
+
     classify(self, X, Y, crval_splits=6, crval_repeats=10)
 
     """
@@ -156,7 +133,7 @@ class Classifier:
         Parameters
         ---------
         X, Y : array_like
-            data for classifier in Sklearn-compatible format. 
+            data for classifier in Sklearn-compatible format.
         parameters : dict
             Dictionary of parameters for Sklearn.GridSearchCV.
         """
@@ -177,14 +154,14 @@ class Classifier:
 
         Notes
         -----
-        Repeated stratified K-fold is a cross-validation model, 
+        Repeated stratified K-fold is a cross-validation model,
         which repeats splitting of the data with a different
-        randomization in each iteration. 
+        randomization in each iteration.
 
         Parameters
         ----------
         X, Y : array_like
-            data for classifier in Sklearn-compatible format. 
+            data for classifier in Sklearn-compatible format.
         crval_splits : int
             Number of splits for cross-validation.
         crval_repeats : int
@@ -192,7 +169,7 @@ class Classifier:
         Returns
         -------
         Accuracy, F1 : list
-            Accuracy and F scores from each pass, not averaged. 
+            Accuracy and F scores from each pass, not averaged.
         """
         Accuracy = []
         F1 = []

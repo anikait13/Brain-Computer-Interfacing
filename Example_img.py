@@ -10,11 +10,9 @@ SUBJECTS = ('MM05', 'MM08', 'MM09', 'MM10', 'MM11', 'MM12', 'MM14', 'MM15',
 
 PATH_TO_DATA = "/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Dataset/"
 
-
 for subject in SUBJECTS:
     Dataset(subject)
 
 for subject in Dataset.registry:
-    subject.load_data(PATH_TO_DATA)
-
-
+    subject.load_data(PATH_TO_DATA, raw=False)  # load raw data and convert to csv
+    subject.csvtoimage()  # Convert csv to image
