@@ -8,6 +8,7 @@ import glob
 import mne
 import scipy.io as sio
 import numpy as np
+import pandas as pd
 import os
 from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
 from sklearn.model_selection import RepeatedStratifiedKFold
@@ -109,34 +110,32 @@ class Dataset:
         self.dataPath = path_to_data + self.name
         print(self.dataPath)
         os.chdir(self.dataPath)
-        if raw:
-            print("Loading raw data.")
-            for f in glob.glob("*.cnt"):
-                print(f)
-                self.eeg_data = mne.io.read_raw_cnt(f, preload=True)
-                # self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger', 'STI 014'])
-                self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger'])
-                self.eeg_dict = {channel: i + 1 for i, channel in enumerate(self.eeg_data.ch_names)}
-                print(self.eeg_dict)
-        else:
-            print("Loading filtered data.")
-            for f in glob.glob("*-filtered.fif"):
-                self.eeg_data = mne.io.read_raw_fif(f, 'standard_1020', preload=True)
-        for f in glob.glob("all_features_noICA.mat"):
-            prompts_to_extract = sio.loadmat(f)
-
-        self.prompts = prompts_to_extract['all_features'][0, 0]
-        # print(self.prompts)
-        for f in glob.glob("epoch_inds.mat"):
-            self.epoch_inds = sio.loadmat(f, variable_names=('clearing_inds', 'thinking_inds'))
-            # print(self.epoch_inds)
+        # if raw:
+        #     print("Loading raw data.")
+        #     for f in glob.glob("*.cnt"):
+        #         print(f)
+        #         self.eeg_data = mne.io.read_raw_cnt(f, preload=True)
+        #         # self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger', 'STI 014'])
+        #         self.eeg_data.drop_channels(['CB1', 'CB2', 'VEO', 'HEO', 'EKG', 'EMG', 'Trigger'])
+        #         self.eeg_dict = {channel: i + 1 for i, channel in enumerate(self.eeg_data.ch_names)}
+        #         print(self.eeg_dict)
+        # else:
+        #     print("Loading filtered data.")
+        #     for f in glob.glob("*-filtered.fif"):
+        #         self.eeg_data = mne.io.read_raw_fif(f, 'standard_1020', preload=True)
+        # for f in glob.glob("all_features_noICA.mat"):
+        #     prompts_to_extract = sio.loadmat(f)
+        #
+        # self.prompts = prompts_to_extract['all_features'][0, 0]
+        # # print(self.prompts)
+        # for f in glob.glob("epoch_inds.mat"):
+        #     self.epoch_inds = sio.loadmat(f, variable_names=('clearing_inds', 'thinking_inds'))
+        #     # print(self.epoch_inds)
 
     def __init__(self, subject):
         self.name = subject
         self.registry.append(self)
-        # TODO is self in self.registry neccesary 
-
-
+        # TODO is self in self.registry neccesary
 
     def select_channels(self, channels=62):
         """Choose how many or which channels to use.
@@ -299,10 +298,7 @@ class Dataset:
 
                     X.append(channel_set)
 
-            # # with open("%s/all_features_calculated.csv" % self.dataPath, "a", newline="") as f:
-            #     writer = csv.writer(f)
-            #     writer.writerows(X)
-            # return X
+            return X
 
         t0 = time()
         Y = []
@@ -319,7 +315,6 @@ class Dataset:
             X.extend(_calculate_features("thinking_inds", Y))
             Y = np.hstack([np.repeat('rest', len(X) / 2), np.repeat('active', len(X) / 2)])
 
-
         print("Features calculated.\nDone in %0.3fs" % (time() - t0))
         self.X = np.asarray(X)
         self.Y = np.hstack(Y)
@@ -327,6 +322,11 @@ class Dataset:
         if scale_data:
             print("Scaling data.")
             self.X['feature_value'] = StandardScaler().fit_transform(self.X['feature_value'])
+
+        with open('%s/X.csv' % self.dataPath, "w") as csv_file:
+            writer = csv.writer(csv_file, delimiter=',')
+            for line in self.X['feature_value']:
+                writer.writerow(line)
 
         return self.X['feature_value'], self.Y
 
@@ -379,8 +379,21 @@ class Dataset:
                   " features left.")
             X = selector.transform(X)
 
+            np.savetxt('%s/Y.csv' % self.dataPath, Y, fmt='%s')
+
             return X['feature_value'], Y, list(selector.get_support([True]))
 
+    def combine_features(self, features_arr):
+        X = pd.read_csv('%s/X.csv' % self.dataPath, usecols=features_arr, header=None)
+        # print(X.shape)
+        Y = []
+        with open('%s/Y.csv' % self.dataPath, "r", newline='') as csv_file:
+            for row in csv.reader(csv_file):
+                Y.extend(row)
+
+        X = np.array(X)
+        Y = np.hstack(Y)
+        return X, Y
 
 class Classifier:
     """Prepare ML models and classify data.
@@ -465,9 +478,10 @@ class Classifier:
         Accuracy = []
         F1 = []
         CFM = []
-        rsk = RepeatedStratifiedKFold(n_splits=crval_splits, n_repeats=crval_repeats)
+        rsk = RepeatedStratifiedKFold(n_splits=crval_splits, n_repeats=crval_repeats , random_state=42)
         t0 = time()
         for train, test in rsk.split(X, Y):
+            print("Training vs Test Ratio =", 100*(len(X[train])/len(X)))
             self.algorithm.fit(X[train], Y[train])
             predicted = self.algorithm.predict(X[test])
             Accuracy.append(accuracy_score(Y[test], predicted) * 100)

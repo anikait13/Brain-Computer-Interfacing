@@ -57,7 +57,6 @@ class Dataset:
         self.prompt_len = len(self.prompts)
         self.dimension = self.prompt_len
 
-
         if raw:
             print("Converting to 63 X 1197 matrix...")
             mat = sio.loadmat("%s/all_features_ICA.mat" % self.dataPath)
@@ -78,17 +77,29 @@ class Dataset:
             takes csv file and convert it to image
             input dimension as 63 to make a 63 X 1197 image
         """
+        counter_knew = 0
+        counter_gnaw = 0
+        counter_pat = 0
+        counter_pot = 0
+
         for label in range(self.prompt_len):
             array = np.array(pd.read_csv(
                 '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/CSV/%s/%s.csv' % (self.name, label)))
             normalized_data = StandardScaler().fit_transform(array)
-            print(normalized_data)
             # TODO which scaler to use
             normalized_data = np.reshape(normalized_data, (63, 1197))
             normalized_data = (normalized_data * 255).astype(np.uint8)  # Convert to uint8
             data = im.fromarray(normalized_data)
+
+            # save by subject
+            # data.save(
+            #     '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png' % (self.name, label))
+
+            if
+            # save by label
             data.save(
-                '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png' % (self.name, label))
+                '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png'
+                % (self.prompts[label], self.prompts[label]))
 
 
 class Classifier:
@@ -174,7 +185,7 @@ class Classifier:
         Accuracy = []
         F1 = []
         CFM = []
-        rsk = RepeatedStratifiedKFold(n_splits=crval_splits, n_repeats=crval_repeats)
+        rsk = RepeatedStratifiedKFold(n_splits=crval_splits, n_repeats=crval_repeats , random_state=42)
         t0 = time()
         for train, test in rsk.split(X, Y):
             self.algorithm.fit(X[train], Y[train])

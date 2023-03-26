@@ -90,7 +90,7 @@ def para_mlpc():
     return para_mlpc
 
 def para_ada():
-    """GridSearchCV parameters for Multi Layer Perceptron."""
+    """GridSearchCV parameters for ADA Boost algorithm."""
     para_ada = [{
         'estimator': [SVC(gamma='auto', kernel='rbf')],
         'learning_rate': [1.0],
