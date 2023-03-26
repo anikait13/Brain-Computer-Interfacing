@@ -38,11 +38,19 @@ class Dataset:
     registry = []
     figures_path = os.path.dirname(os.path.abspath(__file__)) + '/figures'
     os.makedirs(figures_path, exist_ok=True)
+    counter_knew = 0
+    counter_gnaw = 0
+    counter_pat = 0
+    counter_pot = 0
 
     def __init__(self, subject):
         self.name = subject
         self.registry.append(self)
-        # TODO is self in self.registry neccesary 
+        # TODO is self in self.registry neccesary
+        self.counter_knew = 0
+        self.counter_gnaw = 0
+        self.counter_pat = 0
+        self.counter_pot = None
 
     def load_data(self, path_to_data, raw=True):
         """Load subject data from the Kara One dataset.
@@ -72,15 +80,11 @@ class Dataset:
         else:
             pass
 
-    def csvtoimage(self):
+    def csvtoimage(self , counter_knew, counter_gnaw, counter_pat, counter_pot):
         """Convert csv to image
             takes csv file and convert it to image
             input dimension as 63 to make a 63 X 1197 image
         """
-        counter_knew = 0
-        counter_gnaw = 0
-        counter_pat = 0
-        counter_pot = 0
 
         for label in range(self.prompt_len):
             array = np.array(pd.read_csv(
@@ -95,11 +99,35 @@ class Dataset:
             # data.save(
             #     '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png' % (self.name, label))
 
-            if
             # save by label
-            data.save(
-                '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png'
-                % (self.prompts[label], self.prompts[label]))
+
+            if self.prompts[label] == 'knew':
+                save = 'knew'
+                data.save(
+                    '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png'
+                    % (self.prompts[label], counter_knew))
+                counter_knew += 1
+
+            elif self.prompts[label] == 'gnaw':
+                save = 'gnaw'
+                data.save(
+                    '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png'
+                    % (self.prompts[label], counter_gnaw))
+                counter_gnaw += 1
+            elif self.prompts[label] == 'pat':
+                save = 'pat'
+                data.save(
+                    '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png'
+                    % (self.prompts[label], counter_pat))
+                counter_pat += 1
+            elif self.prompts[label] == 'pot':
+                save = 'pot'
+                data.save(
+                    '/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Data/Images/%s/%s.png'
+                    % (self.prompts[label], counter_pot))
+                counter_pot += 1
+
+        return counter_knew + 1, counter_gnaw + 1, counter_pat + 1, counter_pot + 1
 
 
 class Classifier:
@@ -185,7 +213,7 @@ class Classifier:
         Accuracy = []
         F1 = []
         CFM = []
-        rsk = RepeatedStratifiedKFold(n_splits=crval_splits, n_repeats=crval_repeats , random_state=42)
+        rsk = RepeatedStratifiedKFold(n_splits=crval_splits, n_repeats=crval_repeats, random_state=42)
         t0 = time()
         for train, test in rsk.split(X, Y):
             self.algorithm.fit(X[train], Y[train])

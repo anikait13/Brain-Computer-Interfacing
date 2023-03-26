@@ -26,15 +26,15 @@ PATH_TO_DATA = "/Users/anikait/Desktop/builds/Brain-Computer-Interfacing/Dataset
 # Classifier("Random Forest Classifier", RandomForestClassifier())
 # Classifier("k-nearest neighbors", KNeighborsClassifier())
 # Classifier("Linear Discriminant Analysis", LDA())
-# Classifier("Neural Network", MLPClassifier())
-Classifier("ADA Boost", AdaBoostClassifier())
+Classifier("Neural Network", MLPClassifier())
+# Classifier("ADA Boost", AdaBoostClassifier())
 
 # list of experimental variants from expVariants.
 mode_list = (mode1(), mode2(), mode3(), mode4(), mode5(), mode6())
 
 # load parameters for grid search from gridSearchParameters.
 # parameters_list = (para_svc(), para_knn(), para_lda(),para_mlpc(),para_rfc(),para_)
-parameters_list = (para_ada())
+parameters_list = (para_mlpc())
 
 # channels eeg_channels = ('FP1', 'FPZ', 'FP2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1', 'FZ', 'F2', 'F4', 'F6', 'F8',
 # 'FT7', 'FC5', 'FC3', 'FC1', 'FCZ', 'FC2', 'FC4', 'FC6', 'FT8', 'T7', 'C5', 'C3', 'C1', 'CZ', 'C2','C4', 'C6', 'T8',
@@ -88,13 +88,14 @@ print("Y_train shape : ", Y_main.shape)
 
 estimator = SVC(kernel="linear")
 estimator.get_params(deep=True)
-selector = RFE(estimator, n_features_to_select=100, step=0.01)
+selector = RFE(estimator, n_features_to_select=150, step=0.01)
 selector.fit(X_main, Y_main)
 arr = selector.support_
 selected_features = []
 for a in range(len(arr)):
     if arr[a]:
         selected_features.append(a)
+
 X_main = selector.transform(X_main)
 
 print("X_train shape : ", X_main.shape)
@@ -104,9 +105,15 @@ for idx, cl in enumerate(Classifier.registry):
     print(parameters_list)
 
 for cl in Classifier.registry:
-    score = cl.classify(X_main, Y_main, crval_splits=5, crval_repeats=6)
+    score = cl.classify(X_main, Y_main, crval_splits=13, crval_repeats=3)
     overall_accuracy.append(score[3])
     print(score[3])
+
+
+for a in selected_features:
+    print(a//24, a%24)
+
+
 
 # Leave one subject out validation
 #

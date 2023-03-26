@@ -86,6 +86,7 @@ Y = np.hstack(Y_main)
 
 
 # rfe using svm
+selected_features = []
 estimator = SVC(kernel="linear")
 estimator.get_params(deep=True)
 selector = RFE(estimator, n_features_to_select=100, step=0.01)
@@ -93,9 +94,11 @@ selector.fit(X, Y)
 arr = selector.support_
 for a in range(len(arr)):
     if arr[a]:
-        print(a)
+        selected_features.append(a)
+
 
 X = selector.transform(X)
+
 
 
 # amount of folds and repeats
@@ -120,6 +123,8 @@ print("\nConfusion Matrix:\n", np.sum(CFM, axis=0), '\nNumber of instances: ', n
 
 print("Accuracy list ", overall_accuracy)
 print("Accuracy: %.2f%%" % (np.mean(overall_accuracy)))
+print(selected_features)
+
 
 # One by one validation
 # for subject in Dataset.registry:
